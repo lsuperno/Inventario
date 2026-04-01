@@ -8,6 +8,10 @@ import org.ayed.poe.Item;
  * @param <T> Tipo de dato a almacenar en la matriz.
  */
 public class Matriz<T> {
+    private Object[][] casilleros;
+    private int filas;
+    private int columnas;
+
     /**
      * Constructor para matriz cuadrada inicializada con un valor.
      *
@@ -17,7 +21,7 @@ public class Matriz<T> {
      */
     @SuppressWarnings("unchecked")
     public Matriz(int tamanio, T valor) {
-        // TODO: Completar.
+        this(tamanio, tamanio, valor);
     }
 
     /**
@@ -28,7 +32,7 @@ public class Matriz<T> {
      */
     @SuppressWarnings("unchecked")
     public Matriz(int tamanio) {
-        // TODO: Completar.
+        this(tamanio, tamanio);
     }
 
     /**
@@ -41,7 +45,12 @@ public class Matriz<T> {
      */
     @SuppressWarnings("unchecked")
     public Matriz(int filas, int columnas, T valor) {
-        // TODO: Completar.
+        this(filas, columnas);
+        for (int i = 0; i < filas; i++) {
+            for (int j = 0; j < columnas; j++) {
+                asignar(i, j, valor);
+            }
+        }
     }
 
     /**
@@ -53,7 +62,12 @@ public class Matriz<T> {
      */
     @SuppressWarnings("unchecked")
     public Matriz(int filas, int columnas) {
-        // TODO: Completar.
+        if (filas < 1 || columnas <1) {
+            throw new IllegalArgumentException("Filas o columnas tiene que ser mayor que 1");
+        }
+        this.filas = filas;
+        this.columnas = columnas;
+        this.casilleros = new Object[filas][columnas];
     }
 
     /**
@@ -64,7 +78,17 @@ public class Matriz<T> {
      */
     @SuppressWarnings("unchecked")
     public Matriz(Matriz<T> otra) {
-        // TODO: Completar.
+        if (otra == null) {
+            throw new IllegalArgumentException("Matriz a copiar no debe ser nula");
+        }
+        this.filas = otra.filas();
+        this.columnas = otra.columnas();
+        this.casilleros = new Object[this.filas][this.columnas];
+        for (int i = 0; i < this.filas; i++) {
+            for (int j = 0; j < this.columnas; j++) {
+                this.casilleros[i][j] = otra.elemento(i, j);
+            }
+        }
     }
 
     /**
@@ -78,8 +102,8 @@ public class Matriz<T> {
      * @throws IndiceNoValidoException Si el índice está fuera de rango.
      */
     public T elemento(int i, int j) {
-        // TODO: Completar.
-        return (T) new Object();
+        validarIndices(i, j);
+        return (T) this.casilleros[i][j];
     }
 
     /**
@@ -93,7 +117,8 @@ public class Matriz<T> {
      * @throws IndiceNoValidoException Si el índice está fuera de rango.
      */
     public void asignar(int i, int j, T valor) {
-        // TODO: Completar.
+       validarIndices(i, j);
+       this.casilleros[i][j] = valor;
     }
 
     /**
@@ -102,8 +127,7 @@ public class Matriz<T> {
      * @return Cantidad de filas.
      */
     public int filas() {
-        // TODO: Completar.
-        return 0;
+        return this.filas;
     }
 
     /**
@@ -112,7 +136,19 @@ public class Matriz<T> {
      * @return Cantidad de columnas.
      */
     public int columnas() {
-        // TODO: Completar.
-        return 0;
+        return this.columnas;
+    }
+
+    /**
+     * Verifica si los indices recividos son validos (0 <= i filas, 0 <= j < columnas de la matriz)
+     *
+     * @param i fila a verificar
+     * @param j columna a verificar
+     * @throws IndiceNoValidoException Si el índice está fuera de rango.
+     */
+    public void validarIndices(int i, int j) {
+        if (i < 0 || i >= this.filas || j < 0 || j >= this.columnas) {
+            throw new IndiceNoValidoException("Indice fuera de rango");
+        }
     }
 }
