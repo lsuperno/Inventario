@@ -11,6 +11,7 @@ package org.ayed.tda.vector;
  */
 public class VectorEstatico<T> {
     private T[] datos;
+    private int tamanio;
 
     /**
      * Constructor de Vector Estático.
@@ -22,7 +23,11 @@ public class VectorEstatico<T> {
      */
     @SuppressWarnings("unchecked")
     public VectorEstatico(int tamanio) {
-        // TODO: Completar.
+        if (tamanio < 0) {
+            throw new TamanioInvalidoException("El tamaño no puede ser negativo");
+        }
+        this.datos = (T[]) new Object[tamanio];
+        this.tamanio = tamanio;
     }
 
     /**
@@ -35,7 +40,14 @@ public class VectorEstatico<T> {
      */
     @SuppressWarnings("unchecked")
     public VectorEstatico(VectorEstatico<T> otro) {
-        // TODO: Completar.
+        if (otro == null) {
+            throw new IllegalArgumentException("El vector a copiar no puede ser nulo");
+        }
+        this.tamanio = otro.tamanio();
+        this.datos = (T[]) new Object[this.tamanio];
+        for (int i = 0; i < this.tamanio; i++) {
+            asignar(i, otro.obtener(i));
+        }
     }
 
     /**
@@ -47,8 +59,8 @@ public class VectorEstatico<T> {
      * @throws IndiceFueraDeRangoException si el índice es menor a 0 o mayor o igual al tamaño.
      */
     public T obtener(int indice) {
-        // TODO: Completar.
-        return (T) new Object();
+        validarIndice(indice);
+        return this.datos[indice];
     }
 
     /**
@@ -60,7 +72,8 @@ public class VectorEstatico<T> {
      * @throws IndiceFueraDeRangoException si el índice es menor a 0 o mayor o igual al tamaño.
      */
     public void asignar(int indice, T dato) {
-        // TODO: Completar.
+        validarIndice(indice);
+        this.datos[indice] = dato;
     }
 
     /**
@@ -73,7 +86,8 @@ public class VectorEstatico<T> {
      * @throws IndiceFueraDeRangoException si el índice es menor a 0 o mayor o igual al tamaño.
      */
     public void limpiar(int indice) {
-        // TODO: Completar.
+        validarIndice(indice);
+        asignar(indice, null);
     }
 
     /**
@@ -82,7 +96,17 @@ public class VectorEstatico<T> {
      * @return La capacidad total del vector.
      */
     public int tamanio() {
-        // TODO: Completar.
-        return 0;
+        return this.tamanio;
+    }
+
+    /**
+     * Verifica si el indice es valido
+     * @param indice indice a validar
+     * @throws IndiceFueraDeRangoException si el índice es menor a 0 o mayor o igual al tamaño.
+     */
+    public void validarIndice(int indice) {
+        if (indice < 0 || indice >= this.tamanio) {
+            throw new IndiceFueraDeRangoException("Indice invalido");
+        }
     }
 }
