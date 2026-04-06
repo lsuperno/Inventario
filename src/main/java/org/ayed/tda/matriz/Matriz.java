@@ -2,6 +2,8 @@ package org.ayed.tda.matriz;
 
 import org.ayed.poe.Item;
 
+import java.util.Arrays;
+
 /**
  * Implementación de una matriz genérica de tamaño fijo.
  *
@@ -150,5 +152,14 @@ public class Matriz<T> {
         if (i < 0 || i >= this.filas || j < 0 || j >= this.columnas) {
             throw new IndiceNoValidoException("Indice fuera de rango");
         }
+    }
+
+    public String toString() {
+        StringBuilder   matrizTexto = new StringBuilder();
+        for (int i = 0; i < this.casilleros.length; i++) {
+            matrizTexto.append(Arrays.toString(this.casilleros[i]));
+            matrizTexto.append("\n");
+        }
+        return matrizTexto.toString();
     }
 }
