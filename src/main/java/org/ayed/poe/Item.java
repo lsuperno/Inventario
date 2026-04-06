@@ -6,6 +6,8 @@ public class Item {
     private final int id;
     private final int ancho;
     private final int alto;
+    private int xancla;
+    private int yancla;
 
     /**
      * Constructor de un Item.
@@ -44,11 +46,45 @@ public class Item {
         Item item = (Item) o;
         return id == item.id &&
                 ancho == item.ancho &&
-                alto == item.alto;
+                alto == item.alto &&
+                xancla == item.xancla &&
+                yancla == item.yancla;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, ancho, alto);
+        return Objects.hash(id, ancho, alto, xancla, yancla);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getAncho() {
+        return ancho;
+    }
+
+    public int getAlto() {
+        return alto;
+    }
+
+    public int getXancla() {
+        return xancla;
+    }
+
+    public void setXancla(int xancla) {
+        this.xancla = xancla;
+    }
+
+    public int getYancla() {
+        return yancla;
+    }
+
+    public void setYancla(int yancla) {
+        this.yancla = yancla;
+    }
+
+    public String toString() {
+        return String.valueOf(this.id);
     }
 }
