@@ -71,15 +71,9 @@ public class Inventario {
             throw new InventarioFueraDeLimitesException("El ítem excede los límites del inventario.");
         }
 
-        // Verificar casilleros antes de colocar
-        for (int i = 0; i < item.getAlto(); i++) {
-            for (int j = 0; j < item.getAncho(); j++) {
-                if (this.grilla.elemento(y + i, x + j) != null) {
-                    throw new EspacioOcupadoException("Hay otro ítem ocupando el espacio.");
-                }
-            }
+        if (!espacioLibre(x, y, item.getAncho(), item.getAlto())) {
+            throw new EspacioOcupadoException("Hay otro ítem ocupando el espacio.");
         }
-
         item.setXancla(x);
         item.setYancla(y);
         for (int i = 0; i < item.getAlto(); i++) {
@@ -106,16 +100,18 @@ public class Inventario {
         if (existeItem(item.getId())) {
             throw new ItemDuplicadoException("Ya existe un ítem con el ID: " + item.getId());
         }
-
-        for (int x = 0; x <= this.ancho - item.getAlto(); x++) {
-            for (int y = 0; y <= this.alto - item.getAncho(); y++) {
+        boolean colocado = false;
+        for (int x = 0; x <= this.ancho - item.getAncho() && !colocado; x++) {
+            for (int y = 0; y <= this.alto - item.getAlto() && !colocado; y++) {
                 if (espacioLibre(x, y, item.getAncho(), item.getAlto())) {
                     colocarItem(x, y, item);
-                    return;
+                    colocado = true;
                 }
             }
         }
-        throw new InventarioLlenoException("No hay espacio para colocar el item.");
+        if (!colocado) {
+            throw new InventarioLlenoException("No hay espacio para colocar el item.");
+        }
     }
 
 
@@ -131,18 +127,17 @@ public class Inventario {
      */
     public Item eliminarItem(int id) {
         int indice = -1;
-        for (int i = 0; i < this.itemsGuardados.tamanio(); i++) {
+        boolean encontrado = false;
+        for (int i = 0; i < this.itemsGuardados.tamanio() && !encontrado; i++) {
             if (this.itemsGuardados.obtener(i).getId() == id) {
                 indice = i;
+                encontrado = true;
             }
         }
-
         if (indice == -1) {
             throw new ItemNoEncontradoException("No se encontró un ítem con el ID: " + id);
         }
-
         Item item = this.itemsGuardados.eliminar(indice);
-
         for (int i = 0; i < item.getAlto(); i++) {
             for (int j = 0; j < item.getAncho(); j++) {
                 this.grilla.asignar(item.getYancla() + i, item.getXancla() + j, null);
@@ -244,18 +239,21 @@ public class Inventario {
         try (Scanner lector = new Scanner(archivo)) {
             while (lector.hasNextLine()) {
                 String linea = lector.nextLine().trim();
-                String[] datos = linea.split(",");
-                int id = Integer.parseInt(datos[0]);
-                int ancho = Integer.parseInt(datos[1]);
-                int alto = Integer.parseInt(datos[2]);
-                int x = Integer.parseInt(datos[3]);
-                int y = Integer.parseInt(datos[4]);
-                Item item = new Item(id, ancho, alto);
-                colocarItem(x, y, item);
+                if (!linea.isEmpty()) {
+                    String[] datos = linea.split(",");
+                    int id = Integer.parseInt(datos[0]);
+                    int ancho = Integer.parseInt(datos[1]);
+                    int alto = Integer.parseInt(datos[2]);
+                    int x = Integer.parseInt(datos[3]);
+                    int y = Integer.parseInt(datos[4]);
+                    Item item = new Item(id, ancho, alto);
+                    colocarItem(x, y, item);
+                }
             }
         } catch (Exception e) {
             this.grilla = new Matriz<>(this.alto, this.ancho);
             this.itemsGuardados = new VectorDinamico<>();
+            System.out.println("Error al cargar la partida");
         }
     }
 
@@ -286,9 +284,9 @@ public class Inventario {
      */
     private boolean espacioLibre(int x, int y, int ancho, int alto) {
         boolean libre = true;
-        for (int i = 0; i < ancho && libre; i++) {
-            for (int j = 0; j < alto && libre; j++) {
-                if (this.grilla.elemento(y + i, x + j) != null) {
+        for (int i = y; i < y + alto && libre; i++) {
+            for (int j = x; j < x + ancho && libre; j++) {
+                if (this.grilla.elemento(i, j) != null) {
                     libre = false;
                 }
             }

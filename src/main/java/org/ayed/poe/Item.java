@@ -56,34 +56,74 @@ public class Item {
         return Objects.hash(id, ancho, alto, xancla, yancla);
     }
 
+
+    /**
+     * devuelve el id del item
+     * @return id del item
+     */
     public int getId() {
         return id;
     }
 
+
+    /**
+     * devuelve el ancho del item
+     * @return ancho del item
+     */
     public int getAncho() {
         return ancho;
     }
 
+
+    /**
+     * devuelve la altura del item
+     * @return altura del item
+     */
     public int getAlto() {
         return alto;
     }
 
+
+    /**
+     * devuelve la xancla del item (superior izquierda)
+     * @return xancla del item
+     */
     public int getXancla() {
         return xancla;
     }
 
+
+    /**
+     * Le asigna un valor a la yancla del item (superior izquierda)
+     * @param xancla xancla del item
+     */
     public void setXancla(int xancla) {
         this.xancla = xancla;
     }
 
+
+    /**
+     * devuelve la yancla del item (superior izquierda)
+     * @return yancla del item
+     */
     public int getYancla() {
         return yancla;
     }
 
+
+    /**
+     * Le asigna un valor a la yancla del item (superior izquierda)
+     * @param yancla yancla del item
+     */
     public void setYancla(int yancla) {
         this.yancla = yancla;
     }
 
+
+    /**
+     * Convierte el objeto en una cadena de texto.
+     * @return el id del item en formato String
+     */
     public String toString() {
         return String.valueOf(this.id);
     }
