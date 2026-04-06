@@ -1,8 +1,20 @@
 package org.ayed.poe;
 
+import org.ayed.tda.matriz.Matriz;
 import org.ayed.tda.vector.VectorDinamico;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Scanner;
+
 public class Inventario {
+
+    private Matriz<Item> grilla;
+    private VectorDinamico<Item> itemsGuardados;
+    private int ancho;
+    private int alto;
+
     /**
      * Constructor del Inventario.
      * <p>
@@ -13,7 +25,13 @@ public class Inventario {
      * @throws IllegalArgumentException si el ancho o la altura son menores a 1.
      */
     public Inventario(int ancho, int alto) {
-        // TODO: Completar.
+        if (ancho < 1 || alto < 1) {
+            throw new IllegalArgumentException("Las dimensiones deben ser mayores a 0.");
+        }
+        this.ancho = ancho;
+        this.alto = alto;
+        this.grilla = new Matriz<>(alto, ancho);
+        this.itemsGuardados = new VectorDinamico<>();
     }
 
     /**
@@ -25,8 +43,10 @@ public class Inventario {
      * @throws InventarioFueraDeLimitesException Si x o y están fuera de las dimensiones de la grilla.
      */
     public Item obtenerItem(int x, int y) {
-        // TODO: Completar.
-        return new Item();
+        if (x < 0 || x >= this.ancho || y < 0 || y >= this.alto) {
+            throw new InventarioFueraDeLimitesException("Coordenada fuera de los límites de la grilla.");
+        }
+        return this.grilla.elemento(y, x);
     }
 
     /**
@@ -43,7 +63,31 @@ public class Inventario {
      * @throws ItemDuplicadoException            Si un item con el mismo ID ya existe en el inventario.
      */
     public void colocarItem(int x, int y, Item item) {
-        // TODO: Completar.
+        if (existeItem(item.getId())) {
+            throw new ItemDuplicadoException("Ya existe un ítem con el ID: " + item.getId());
+        }
+
+        if (x < 0 || y < 0 || x + item.getAncho() > this.ancho || y + item.getAlto() > this.alto) {
+            throw new InventarioFueraDeLimitesException("El ítem excede los límites del inventario.");
+        }
+
+        // Verificar casilleros antes de colocar
+        for (int i = 0; i < item.getAlto(); i++) {
+            for (int j = 0; j < item.getAncho(); j++) {
+                if (this.grilla.elemento(y + i, x + j) != null) {
+                    throw new EspacioOcupadoException("Hay otro ítem ocupando el espacio.");
+                }
+            }
+        }
+
+        item.setXancla(x);
+        item.setYancla(y);
+        for (int i = 0; i < item.getAlto(); i++) {
+            for (int j = 0; j < item.getAncho(); j++) {
+                this.grilla.asignar(y + i, x + j, item);
+            }
+        }
+        this.itemsGuardados.agregar(item);
     }
 
     /**
@@ -59,8 +103,21 @@ public class Inventario {
      * @throws ItemDuplicadoException   Si un item con el mismo ID ya existe en el inventario.
      */
     public void colocarItem(Item item) {
-        // TODO: Completar.
+        if (existeItem(item.getId())) {
+            throw new ItemDuplicadoException("Ya existe un ítem con el ID: " + item.getId());
+        }
+
+        for (int x = 0; x <= this.ancho - item.getAlto(); x++) {
+            for (int y = 0; y <= this.alto - item.getAncho(); y++) {
+                if (espacioLibre(x, y, item.getAncho(), item.getAlto())) {
+                    colocarItem(x, y, item);
+                    return;
+                }
+            }
+        }
+        throw new InventarioLlenoException("No hay espacio para colocar el item.");
     }
+
 
     /**
      * Elimina un item por su ID.
@@ -73,8 +130,28 @@ public class Inventario {
      * @throws ItemNoEncontradoException Si no existe ningún item con el ID dado.
      */
     public Item eliminarItem(int id) {
-        // TODO: Completar.
-        return new Item();
+        int indice = -1;
+        for (int i = 0; i < this.itemsGuardados.tamanio(); i++) {
+            if (this.itemsGuardados.obtener(i).getId() == id) {
+                indice = i;
+            }
+        }
+
+        if (indice == -1) {
+            throw new ItemNoEncontradoException("No se encontró un ítem con el ID: " + id);
+        }
+
+        Item item = this.itemsGuardados.eliminar(indice);
+
+        for (int i = 0; i < item.getAlto(); i++) {
+            for (int j = 0; j < item.getAncho(); j++) {
+                this.grilla.asignar(item.getYancla() + i, item.getXancla() + j, null);
+            }
+        }
+
+        item.setXancla(-1);
+        item.setYancla(-1);
+        return item;
     }
 
     /**
@@ -90,8 +167,11 @@ public class Inventario {
      * @throws InventarioFueraDeLimitesException Si la coordenada (x, y) consultada está fuera de la grilla.
      */
     public Item eliminarItem(int x, int y) {
-        // TODO: Completar.
-        return new Item();
+        Item item = obtenerItem(x, y);
+        if (item == null) {
+            throw new ItemNoEncontradoException("El casillero está vacío.");
+        }
+        return eliminarItem(item.getId());
     }
 
     /**
@@ -107,18 +187,40 @@ public class Inventario {
      *                                  entrante contiene duplicados.
      */
     public void transferirItems(VectorDinamico<Item> items) {
-        // TODO: Completar.
+        VectorDinamico<Integer> idsColocados = new VectorDinamico<>();
+        try {
+            for (int i = 0; i < items.tamanio(); i++) {
+                Item item = items.obtener(i);
+                colocarItem(item);
+                idsColocados.agregar(item.getId());
+            }
+        } catch (RuntimeException e) {
+            for (int i = 0; i < idsColocados.tamanio(); i++) {
+                eliminarItem(idsColocados.obtener(i));
+            }
+            throw e;
+        }
     }
 
     /**
      * Guarda el estado actual del inventario en un archivo.
      * <p>
      * El formato es específico de la implementación, pero debe soportar la reconstrucción completa del estado.
+     * El formato es CSV ID, Ancho, Alto, Xancla, Yancla.
      *
      * @param ruta La ruta al archivo donde se guardará el inventario.
      */
     public void guardar(String ruta) {
-        // TODO: Completar.
+        try (PrintWriter escritor = new PrintWriter(new FileWriter(ruta))) {
+            for (int i = 0; i < this.itemsGuardados.tamanio(); i++) {
+                Item item = this.itemsGuardados.obtener(i);
+                // CSV: ID, Ancho, Alto, X, Y
+                escritor.println(item.getId() + "," + item.getAncho() + "," +
+                        item.getAlto() + "," + item.getXancla() + "," + item.getYancla());
+            }
+        } catch (Exception e) {
+            System.out.println("Error al guardar la partida");
+        }
     }
 
     /**
@@ -132,6 +234,69 @@ public class Inventario {
      * @throws ArchivoNoExistenteException Si la ruta del archivo no existe.
      */
     public void cargar(String filepath) {
-        // TODO: Completar.
+        File archivo = new File(filepath);
+        if (!archivo.exists()) {
+            throw new ArchivoNoExistenteException("El archivo no existe.");
+        }
+        this.grilla = new Matriz<>(this.alto, this.ancho);
+        this.itemsGuardados = new VectorDinamico<>();
+
+        try (Scanner lector = new Scanner(archivo)) {
+            while (lector.hasNextLine()) {
+                String linea = lector.nextLine().trim();
+                String[] datos = linea.split(",");
+                int id = Integer.parseInt(datos[0]);
+                int ancho = Integer.parseInt(datos[1]);
+                int alto = Integer.parseInt(datos[2]);
+                int x = Integer.parseInt(datos[3]);
+                int y = Integer.parseInt(datos[4]);
+                Item item = new Item(id, ancho, alto);
+                colocarItem(x, y, item);
+            }
+        } catch (Exception e) {
+            this.grilla = new Matriz<>(this.alto, this.ancho);
+            this.itemsGuardados = new VectorDinamico<>();
+        }
+    }
+
+
+    /**
+     * Verifica si existe un item con el ID dado.
+     * @param id ID del item a buscar
+     * @return true si existe, false si no
+     */
+    private boolean existeItem(int id) {
+        boolean existe = false;
+        for (int i = 0; i < this.itemsGuardados.tamanio() && !existe; i++) {
+            if (this.itemsGuardados.obtener(i).getId() == id) {
+                existe = true;
+            }
+        }
+        return existe;
+    }
+
+
+    /**
+     * Verifica si hay espacio libre para un item
+     * @param x coordenada x del item
+     * @param y coordenada y del item
+     * @param ancho ancho del item
+     * @param alto alto del item
+     * @return true si hay espacio libre, false si no
+     */
+    private boolean espacioLibre(int x, int y, int ancho, int alto) {
+        boolean libre = true;
+        for (int i = 0; i < ancho && libre; i++) {
+            for (int j = 0; j < alto && libre; j++) {
+                if (this.grilla.elemento(y + i, x + j) != null) {
+                    libre = false;
+                }
+            }
+        }
+        return libre;
+    }
+
+    public String toString() {
+        return this.grilla.toString();
     }
 }
